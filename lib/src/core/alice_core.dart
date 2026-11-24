@@ -89,6 +89,8 @@ class AliceCore {
     _shakeDetector ??= ShakeDetector.autoStart(
       onPhoneShake: handleShake,
       shakeThresholdGravity: _configuration.shakeThresholdGravity,
+      minimumShakeCount: _configuration.shakeMinimumCount,
+      cooldownMS: _configuration.shakeCooldown.inMilliseconds,
     );
   }
 

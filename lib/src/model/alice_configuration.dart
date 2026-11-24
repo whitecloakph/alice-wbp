@@ -35,6 +35,15 @@ class AliceConfiguration extends Equatable {
   /// otherwise reports shakes itself).
   final double shakeThresholdGravity;
 
+  /// Accelerometer shakes needed within a few seconds before a shake counts
+  /// (Android, and the iOS fallback). Default 1 (every shake counts). 2 or
+  /// more avoids firing on a single jolt.
+  final int shakeMinimumCount;
+
+  /// After a shake counts, further shakes are ignored for this long
+  /// (accelerometer only), so one long shake counts once. Default zero.
+  final Duration shakeCooldown;
+
   /// Whether the overlay bubble, when released after a drag, glides to the
   /// nearest screen edge (left, right, top or bottom, inside the safe area)
   /// and stays on that edge when the screen size changes. Default false.
@@ -78,6 +87,8 @@ class AliceConfiguration extends Equatable {
     this.showInspectorOnShake = true,
     this.shakeAction = AliceShakeAction.openInspector,
     this.shakeThresholdGravity = 4,
+    this.shakeMinimumCount = 1,
+    this.shakeCooldown = Duration.zero,
     this.snapOverlayBubbleToEdge = false,
     this.directionality,
     this.showShareButton = true,
@@ -101,6 +112,8 @@ class AliceConfiguration extends Equatable {
     bool? showInspectorOnShake,
     AliceShakeAction? shakeAction,
     double? shakeThresholdGravity,
+    int? shakeMinimumCount,
+    Duration? shakeCooldown,
     bool? snapOverlayBubbleToEdge,
     TextDirection? directionality,
     bool? showShareButton,
@@ -117,6 +130,8 @@ class AliceConfiguration extends Equatable {
     showInspectorOnShake: showInspectorOnShake ?? this.showInspectorOnShake,
     shakeAction: shakeAction ?? this.shakeAction,
     shakeThresholdGravity: shakeThresholdGravity ?? this.shakeThresholdGravity,
+    shakeMinimumCount: shakeMinimumCount ?? this.shakeMinimumCount,
+    shakeCooldown: shakeCooldown ?? this.shakeCooldown,
     snapOverlayBubbleToEdge:
         snapOverlayBubbleToEdge ?? this.snapOverlayBubbleToEdge,
     directionality: directionality ?? this.directionality,
@@ -139,6 +154,8 @@ class AliceConfiguration extends Equatable {
     showInspectorOnShake,
     shakeAction,
     shakeThresholdGravity,
+    shakeMinimumCount,
+    shakeCooldown,
     snapOverlayBubbleToEdge,
     directionality,
     showShareButton,

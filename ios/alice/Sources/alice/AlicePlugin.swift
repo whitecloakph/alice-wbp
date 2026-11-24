@@ -14,9 +14,16 @@ import UIKit
 /// The override is installed only when Dart starts listening, which Alice
 /// does only when it is active. An app that registers the plugin but never
 /// creates Alice (for example a production build) leaves UIWindow untouched.
+///
+/// While Dart listens, iOS's shake-to-undo ("Undo Typing") is turned off so a
+/// shake only means Alice; the app's previous setting comes back when Dart
+/// stops listening.
 public class AlicePlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
   private var eventSink: FlutterEventSink?
   private var observer: NSObjectProtocol?
+  /// The app's shake-to-undo setting before Alice listened; nil when not
+  /// listening.
+  private var savedShakeToEdit: Bool?
 
   public static func register(with registrar: FlutterPluginRegistrar) {
     let instance = AlicePlugin()
@@ -40,6 +47,10 @@ public class AlicePlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
   ) -> FlutterError? {
     eventSink = events
     UIWindow.aliceInstallShakeHook()
+    if savedShakeToEdit == nil {
+      savedShakeToEdit = UIApplication.shared.applicationSupportsShakeToEdit
+    }
+    UIApplication.shared.applicationSupportsShakeToEdit = false
     if observer == nil {
       observer = NotificationCenter.default.addObserver(
         forName: .aliceDeviceShaken, object: nil, queue: .main
@@ -56,6 +67,10 @@ public class AlicePlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
     }
     observer = nil
     eventSink = nil
+    if let saved = savedShakeToEdit {
+      UIApplication.shared.applicationSupportsShakeToEdit = saved
+    }
+    savedShakeToEdit = nil
     return nil
   }
 }

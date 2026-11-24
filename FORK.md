@@ -91,6 +91,20 @@ starts listening on `alice/shake` (only an active Alice does), not when the
 plugin registers. Builds that never create Alice, such as production builds,
 leave UIWindow unchanged.
 
+## 6. Fewer accidental shakes; no "Undo Typing" (2.0.0+pbb.6)
+
+- New `AliceConfiguration.shakeMinimumCount` (default 1) and `shakeCooldown`
+  (default zero) for the accelerometer detector (Android, and the iOS
+  fallback): a shake counts only after that many strong shakes, each at
+  least 500 ms apart and none more than 3 s after the previous; after it
+  counts, shakes are ignored for the cooldown. Defaults keep upstream
+  behaviour. `ShakeDetector` gains `minimumShakeCount` / `cooldownMS` and a
+  testable `handleAcceleration`.
+- iOS: while Dart listens for shakes, `applicationSupportsShakeToEdit` is
+  off, so a shake while typing no longer also shows iOS's "Undo Typing"
+  prompt; the app's previous setting is restored when Dart stops listening.
+- Test: `test/services/shake_detector_count_test.dart`; 150 tests pass.
+
 ## Using it
 
 Use it as a git dependency pinned to a commit:

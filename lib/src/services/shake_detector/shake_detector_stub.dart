@@ -8,12 +8,16 @@ class ShakeDetector {
   final double shakeThresholdGravity;
   final int shakeSlopTimeMS;
   final int shakeCountResetTime;
+  final int minimumShakeCount;
+  final int cooldownMS;
 
   ShakeDetector.waitForStart({
     this.onPhoneShake,
     this.shakeThresholdGravity = 2.7,
     this.shakeSlopTimeMS = 500,
     this.shakeCountResetTime = 3000,
+    this.minimumShakeCount = 1,
+    this.cooldownMS = 0,
   });
 
   ShakeDetector.autoStart({
@@ -21,6 +25,8 @@ class ShakeDetector {
     this.shakeThresholdGravity = 2.7,
     this.shakeSlopTimeMS = 500,
     this.shakeCountResetTime = 3000,
+    this.minimumShakeCount = 1,
+    this.cooldownMS = 0,
   });
 
   /// No-op on unsupported platforms.
