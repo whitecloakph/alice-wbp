@@ -6,8 +6,19 @@ import 'package:flutter/widgets.dart';
 class AliceOverlayService {
   OverlayEntry? _overlayEntry;
 
+  /// Where the user last released the bubble. Kept across re-inserts, so the
+  /// bubble comes back to the same spot after it is hidden and shown or the
+  /// inspector closes.
+  AliceBubblePlacement? _placement;
+
+  /// True from [ensureInserted] until the end of that frame: a new entry is
+  /// not `mounted` before the next frame, and treating it as missing made two
+  /// calls recorded in the same frame insert two bubbles (fork fix).
+  bool _awaitingMount = false;
+
   /// Returns true if the overlay is currently inserted into the tree.
-  bool get isInserted => _overlayEntry != null && _overlayEntry!.mounted;
+  bool get isInserted =>
+      _overlayEntry != null && (_overlayEntry!.mounted || _awaitingMount);
 
   /// Ensures the overlay entry is inserted into [overlayState].
   void ensureInserted({
@@ -19,7 +30,7 @@ class AliceOverlayService {
     }
 
     if (_overlayEntry != null) {
-      if (_overlayEntry!.mounted) {
+      if (_overlayEntry!.mounted || _awaitingMount) {
         return;
       }
       _overlayEntry = null;
@@ -40,11 +51,19 @@ class AliceOverlayService {
           },
           onDismiss: remove,
           snapToEdge: core.configuration.snapOverlayBubbleToEdge,
+          initialPlacement: _placement,
+          onPlacementChanged: (placement) => _placement = placement,
         );
       },
     );
 
     overlayState.insert(_overlayEntry!);
+    _awaitingMount = true;
+    final inserted = _overlayEntry;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (identical(_overlayEntry, inserted)) _awaitingMount = false;
+    });
+    WidgetsBinding.instance.scheduleFrame();
   }
 
   /// Rebuilds the overlay entry if inserted (e.g. when inspector opens/closes).
@@ -56,5 +75,6 @@ class AliceOverlayService {
   void remove() {
     _overlayEntry?.remove();
     _overlayEntry = null;
+    _awaitingMount = false;
   }
 }

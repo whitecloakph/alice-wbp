@@ -71,6 +71,19 @@ physical shake never fires twice. Android keeps the accelerometer.
   Checked on the iOS Simulator with
   `xcrun simctl spawn <udid> notifyutil -p com.apple.UIKit.SimulatorShake`.
 
+## 4. Bubble keeps its spot; no double bubble (2.0.0+pbb.4)
+
+- `AliceOverlayService` remembers where the user last released the bubble
+  (position and snapped edge) and passes it to the re-created bubble, so it
+  comes back to the same spot after it is hidden and shown, or after the
+  inspector closes (upstream always restarted at the top-right default).
+- Fix: a new overlay entry is not `mounted` until the next frame, so upstream
+  inserted a second bubble when two calls were recorded in the same frame
+  (stacked bubbles; hide removed only one). `ensureInserted` now treats an
+  entry inserted this frame as present.
+- Tests: bubble placement (`alice_core_shake_test.dart`,
+  `alice_overlay_bubble_snap_test.dart`) and one-bubble-per-frame; 144 pass.
+
 ## Using it
 
 Use it as a git dependency pinned to a commit:

@@ -18,6 +18,14 @@ class AliceOverlayBubble extends StatefulWidget {
   /// stays on that edge when the screen or bubble size changes.
   final bool snapToEdge;
 
+  /// Where the bubble was last released, to start there instead of the
+  /// default top-right spot (the overlay re-creates the bubble after it is
+  /// hidden and shown, and after the inspector closes).
+  final AliceBubblePlacement? initialPlacement;
+
+  /// Called with the new placement whenever the user releases the bubble.
+  final ValueChanged<AliceBubblePlacement>? onPlacementChanged;
+
   const AliceOverlayBubble({
     super.key,
     required this.callsStream,
@@ -25,6 +33,8 @@ class AliceOverlayBubble extends StatefulWidget {
     required this.onTap,
     required this.onDismiss,
     this.snapToEdge = false,
+    this.initialPlacement,
+    this.onPlacementChanged,
   });
 
   @override
@@ -33,6 +43,18 @@ class AliceOverlayBubble extends StatefulWidget {
 
 /// Screen edge the bubble is snapped to.
 enum _BubbleEdge { left, right, top, bottom }
+
+/// Where the user left the bubble: its top-left position and, when snapping,
+/// the edge it is on. Opaque outside this file; [AliceOverlayService] keeps
+/// it so a re-created bubble comes back to the same spot.
+class AliceBubblePlacement {
+  const AliceBubblePlacement._(this.offset, this._edge);
+
+  /// Top-left position of the bubble when it was released.
+  final Offset offset;
+
+  final _BubbleEdge? _edge;
+}
 
 class _AliceOverlayBubbleState extends State<AliceOverlayBubble> {
   /// Gap between a snapped bubble and the safe-area edge.
@@ -47,6 +69,17 @@ class _AliceOverlayBubbleState extends State<AliceOverlayBubble> {
   bool _isDragging = false;
   _BubbleEdge? _edge;
   Size _bubbleSize = _defaultBubbleSize;
+
+  @override
+  void initState() {
+    super.initState();
+    final placement = widget.initialPlacement;
+    if (placement != null) {
+      _offset = placement.offset;
+      _edge = placement._edge;
+      _isInitialized = true;
+    }
+  }
 
   /// Allowed top-left positions inside the safe area for the current size.
   Rect _bounds(MediaQueryData mediaQuery) {
@@ -102,6 +135,7 @@ class _AliceOverlayBubbleState extends State<AliceOverlayBubble> {
         _offset = _onEdge(_offset, bounds, _edge!);
       }
     });
+    widget.onPlacementChanged?.call(AliceBubblePlacement._(_offset, _edge));
   }
 
   /// Re-lays out once the real bubble size is known (it changes with the

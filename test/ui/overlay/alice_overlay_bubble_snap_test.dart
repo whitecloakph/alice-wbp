@@ -90,6 +90,52 @@ void main() {
       expect(tester.getTopRight(bubble()).dx, lessThan(700));
     });
 
+    testWidgets('a new bubble starts at the placement it is given',
+        (tester) async {
+      final storage = AliceMemoryStorage(maxCallsCount: 10);
+      final call = AliceHttpCall(1)
+        ..method = 'GET'
+        ..endpoint = '/test'
+        ..request = AliceHttpRequest()
+        ..response = (AliceHttpResponse()..status = 200);
+      storage.addCall(call);
+      storage.addResponse(call.response!, 1);
+      AliceBubblePlacement? placement;
+      Widget app(Key key, AliceBubblePlacement? initial) => MaterialApp(
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  AliceOverlayBubble(
+                    key: key,
+                    callsStream: storage.callsStream,
+                    storage: storage,
+                    onTap: () {},
+                    onDismiss: () {},
+                    snapToEdge: true,
+                    initialPlacement: initial,
+                    onPlacementChanged: (p) => placement = p,
+                  ),
+                ],
+              ),
+            ),
+          );
+
+      await tester.pumpWidget(app(const ValueKey(1), null));
+      await tester.pumpAndSettle();
+      final start = tester.getCenter(bubble());
+      await tester.dragFrom(start, Offset(400 - start.dx, 585 - start.dy));
+      await tester.pumpAndSettle();
+      expect(placement, isNotNull);
+      final dropped = tester.getTopLeft(bubble());
+
+      // A different key re-creates the bubble, like the overlay does.
+      await tester.pumpWidget(app(const ValueKey(2), placement));
+      await tester.pumpAndSettle();
+      expect(tester.getTopLeft(bubble()).dx, closeTo(dropped.dx, 0.5));
+      expect(tester.getTopLeft(bubble()).dy, closeTo(dropped.dy, 0.5));
+      expect(tester.getBottomLeft(bubble()).dy, closeTo(600 - 8, 0.5));
+    });
+
     testWidgets('stays flush right when the bubble grows', (tester) async {
       final storage = await pumpBubble(tester, snapToEdge: true);
       final error = AliceHttpCall(2)
