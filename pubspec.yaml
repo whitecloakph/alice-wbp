@@ -1,7 +1,7 @@
 name: alice
 description: "Advanced HTTP network inspector and logger for Flutter. Intercepts REST API requests and responses with a native UI for seamless debugging."
 documentation: https://jhomlala.github.io/alice/
-version: 2.0.0+pbb.2
+version: 2.0.0+pbb.3
 publish_to: none
 homepage: https://github.com/jhomlala/alice
 repository: https://github.com/jhomlala/alice
@@ -70,3 +70,10 @@ screenshots:
     path: assets/pub/07_request_replay.png
   - description: 'Dark mode support for the inspector UI'
     path: assets/pub/08_dark_mode.png
+
+# Fork: iOS part forwards the iOS shake gesture to Dart (see FORK.md).
+flutter:
+  plugin:
+    platforms:
+      ios:
+        pluginClass: AlicePlugin

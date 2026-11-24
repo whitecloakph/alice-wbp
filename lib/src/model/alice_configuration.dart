@@ -30,7 +30,9 @@ class AliceConfiguration extends Equatable {
   /// Defaults to [AliceShakeAction.openInspector].
   final AliceShakeAction shakeAction;
 
-  /// Acceleration, in g, a shake must exceed. Default 4.
+  /// Acceleration, in g, a shake must exceed. Default 4. Used on Android,
+  /// and on iOS only when the native shake gesture is not available (iOS
+  /// otherwise reports shakes itself).
   final double shakeThresholdGravity;
 
   /// Whether the overlay bubble, when released after a drag, glides to the

@@ -19,6 +19,7 @@ import 'package:alice/src/model/alice_http_error.dart';
 import 'package:alice/src/model/alice_http_response.dart';
 import 'package:alice/src/model/alice_log.dart';
 import 'package:alice/src/ui/common/navigation.dart';
+import 'package:alice/src/services/shake_detector/native_shake_listener.dart';
 import 'package:alice/src/services/shake_detector/shake_detector.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -28,6 +29,9 @@ class AliceCore {
 
   /// Detector used to detect device shakes
   ShakeDetector? _shakeDetector;
+
+  /// iOS shake gesture listener (fork); falls back to [_shakeDetector].
+  AliceNativeShakeListener? _nativeShakeListener;
 
   /// Subscription for call changes
   StreamSubscription<List<AliceHttpCall>>? _callsSubscription;
@@ -62,11 +66,16 @@ class AliceCore {
     );
 
     if (_configuration.showInspectorOnShake) {
-      if (OperatingSystem.isAndroid || OperatingSystem.isIOS) {
-        _shakeDetector = ShakeDetector.autoStart(
-          onPhoneShake: handleShake,
-          shakeThresholdGravity: _configuration.shakeThresholdGravity,
-        );
+      if (OperatingSystem.isIOS) {
+        // iOS reports the shake gesture itself (also the Simulator's
+        // Device > Shake); the accelerometer is only the fallback, so one
+        // shake never fires twice.
+        _nativeShakeListener = AliceNativeShakeListener(
+          onShake: handleShake,
+          onUnavailable: _startAccelerometerShakeDetector,
+        )..start();
+      } else if (OperatingSystem.isAndroid) {
+        _startAccelerometerShakeDetector();
       }
     }
 
@@ -75,6 +84,13 @@ class AliceCore {
 
   /// Returns current configuration
   AliceConfiguration get configuration => _configuration;
+
+  void _startAccelerometerShakeDetector() {
+    _shakeDetector ??= ShakeDetector.autoStart(
+      onPhoneShake: handleShake,
+      shakeThresholdGravity: _configuration.shakeThresholdGravity,
+    );
+  }
 
   /// Set custom navigation key. This will help if there's route library.
   void setNavigatorKey(GlobalKey<NavigatorState> navigatorKey) {
@@ -125,6 +141,7 @@ class AliceCore {
   /// Dispose subjects and subscriptions
   void dispose() {
     _shakeDetector?.stopListening();
+    _nativeShakeListener?.dispose();
     _overlayService.remove();
     _configuration.notificationAdapter?.dispose();
     _unsubscribeFromCallChanges();

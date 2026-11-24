@@ -2,7 +2,7 @@
 
 This is a copy of [alice 2.0.0](https://pub.dev/packages/alice) (Apache
 License 2.0, see `LICENSE`; original source https://github.com/jhomlala/alice)
-with two kinds of change, listed below. Everything else is upstream 2.0.0.
+with the changes listed below. Everything else is upstream 2.0.0.
 
 ## 1. Dependency ranges (2.0.0+pbb.1)
 
@@ -33,7 +33,7 @@ New `AliceConfiguration` options. Their defaults keep upstream behaviour.
 |---|---|---|
 | `snapOverlayBubbleToEdge` | `false` | On release, the bubble glides to the nearest screen edge (left, right, top or bottom, 8 px inside the safe area) and stays on that edge when the screen or bubble size changes. |
 | `shakeAction` | `AliceShakeAction.openInspector` | `toggleOverlayBubble` makes a shake show or hide the bubble instead of opening the inspector. |
-| `shakeThresholdGravity` | `4` | Acceleration (g) a shake must exceed; upstream hard-coded 4. |
+| `shakeThresholdGravity` | `4` | Acceleration (g) a shake must exceed; upstream hard-coded 4. Android only since 2.0.0+pbb.3 (iOS uses the native gesture, below), and the iOS fallback. |
 
 Also:
 
@@ -50,6 +50,26 @@ Changed files: `lib/alice.dart`, `lib/src/model/alice_configuration.dart`,
 `test/ui/overlay/alice_overlay_bubble_snap_test.dart` (new). All 138 tests
 pass on Flutter 3.50.1 (run outside the upstream pub workspace, so drop the
 `resolution: workspace` line from `pubspec.yaml` first).
+
+## 3. Native iOS shake gesture (2.0.0+pbb.3)
+
+On iOS, shakes now come from iOS itself (`UIEvent` `motionShake`) instead of
+the accelerometer, so the Simulator's Device > Shake works too and one
+physical shake never fires twice. Android keeps the accelerometer.
+
+- The package is now also a Flutter plugin for iOS only (`flutter.plugin.platforms.ios.pluginClass: AlicePlugin`;
+  CocoaPods `ios/alice.podspec` and Swift Package Manager `ios/alice/Package.swift`).
+- `AlicePlugin.swift` adds a `motionEnded(_:with:)` override to `UIWindow`
+  that posts a notification and then calls the previous implementation with
+  the same selector (so the event still travels up the responder chain), and
+  sends each shake on the `alice/shake` event channel. `alice/shake_control`
+  answers `isAvailable`.
+- Dart: `AliceNativeShakeListener` (`lib/src/services/shake_detector/native_shake_listener.dart`);
+  `AliceCore` uses it on iOS and falls back to the accelerometer when the iOS
+  part is missing (web, or the plugin not linked).
+- Test: `test/services/native_shake_listener_test.dart` (141 tests pass).
+  Checked on the iOS Simulator with
+  `xcrun simctl spawn <udid> notifyutil -p com.apple.UIKit.SimulatorShake`.
 
 ## Using it
 
