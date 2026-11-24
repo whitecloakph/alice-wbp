@@ -1,0 +1,72 @@
+name: alice
+description: "Advanced HTTP network inspector and logger for Flutter. Intercepts REST API requests and responses with a native UI for seamless debugging."
+documentation: https://jhomlala.github.io/alice/
+version: 2.0.0+pbb.1
+publish_to: none
+homepage: https://github.com/jhomlala/alice
+repository: https://github.com/jhomlala/alice
+issue_tracker: https://github.com/jhomlala/alice/issues
+resolution: workspace
+topics:
+  - network
+  - logger
+  - inspector
+  - interceptor
+  - http
+
+platforms:
+  android:
+  ios:
+  linux:
+  macos:
+  web:
+  windows:
+
+environment:
+  sdk: ">=3.13.0 <4.0.0"
+  flutter: ">=3.29.0"
+
+dependencies:
+  material_ui: ^1.2.0
+  flutter:
+    sdk: flutter
+  rxdart: '>=0.27.7 <0.29.0'
+  path_provider: ^2.1.5
+  permission_handler: '>=12.0.1 <14.0.0'
+  package_info_plus: '>=9.0.0 <11.0.0'
+  open_file: '>=3.5.10 <5.0.0'
+  sensors_plus: '>=6.1.0 <8.0.0'
+  share_plus: '>=12.0.0 <14.0.0'
+  collection: ^1.19.1
+  url_launcher: ^6.3.2
+  equatable: '>=2.0.5 <4.0.0'
+  xml: '>=6.5.0 <8.0.0'
+
+  cupertino_ui: ^1.0.2
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+  lints: ^6.1.0
+  test: ^1.25.15
+  mocktail: ^1.0.4
+
+screenshots:
+  - description: 'Alice Network Inspector Logo'
+    path: assets/pub/logo.png
+  - description: 'Main screen showing HTTP calls list'
+    path: assets/pub/01_calls_list.png
+  - description: 'Detailed view of a single HTTP request'
+    path: assets/pub/02_request_details.png
+  - description: 'Interactive JSON tree viewer for request bodies'
+    path: assets/pub/03_json_viewer.png
+  - description: 'Staggered timeline view of HTTP calls'
+    path: assets/pub/04_timeline.png
+  - description: 'Actionable statistics dashboard for network calls'
+    path: assets/pub/05_stats_dashboard.png
+  - description: 'Advanced search filters with syntax support'
+    path: assets/pub/06_advanced_search.png
+  - description: 'Replaying HTTP requests directly from the inspector'
+    path: assets/pub/07_request_replay.png
+  - description: 'Dark mode support for the inspector UI'
+    path: assets/pub/08_dark_mode.png

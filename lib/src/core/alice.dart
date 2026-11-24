@@ -1,0 +1,68 @@
+import 'package:flutter/widgets.dart';
+import 'package:alice/src/core/alice_adapter.dart';
+import 'package:alice/src/core/alice_core.dart';
+import 'package:alice/src/model/alice_configuration.dart';
+import 'package:alice/src/model/alice_http_call.dart';
+import 'package:alice/src/model/alice_log.dart';
+
+class Alice {
+  /// Alice core instance
+  late final AliceCore _aliceCore;
+
+  /// Creates alice instance.
+  Alice({AliceConfiguration? configuration}) {
+    _aliceCore = AliceCore(
+      configuration: configuration ?? AliceConfiguration(),
+    );
+  }
+
+  /// Set custom navigation key. This will help if there's route library.
+  void setNavigatorKey(GlobalKey<NavigatorState> navigatorKey) {
+    _aliceCore.setNavigatorKey(navigatorKey);
+  }
+
+  /// Get currently used navigation key
+  GlobalKey<NavigatorState>? getNavigatorKey() =>
+      _aliceCore.configuration.navigatorKey;
+
+  /// Opens Http calls inspector. This will navigate user to the new fullscreen
+  /// page where all listened http calls can be viewed.
+  void showInspector() => _aliceCore.navigateToCallListScreen();
+
+  /// Manually shows or ensures the floating overlay bubble is displayed.
+  void showOverlayBubble() => _aliceCore.showOverlayBubble();
+
+  /// Removes or hides the floating overlay bubble.
+  void hideOverlayBubble() => _aliceCore.hideOverlayBubble();
+
+  /// Returns true if the floating overlay bubble is currently mounted.
+  bool get isOverlayBubbleVisible => _aliceCore.isOverlayBubbleVisible;
+
+  /// Handle generic http call. Can be used to any http client.
+  void addHttpCall(AliceHttpCall aliceHttpCall) {
+    assert(aliceHttpCall.request != null, "Http call request can't be null");
+    assert(aliceHttpCall.response != null, "Http call response can't be null");
+
+    _aliceCore.addCall(aliceHttpCall);
+  }
+
+  /// Adds new log to Alice logger.
+  void addLog(AliceLog log) => _aliceCore.addLog(log);
+
+  /// Adds list of logs to Alice logger
+  void addLogs(List<AliceLog> logs) => _aliceCore.addLogs(logs);
+
+  /// Returns flag which determines whether inspector is opened
+  bool get isInspectorOpened => _aliceCore.isInspectorOpened;
+
+  /// Adds new adapter to Alice.
+  void addAdapter(AliceAdapter adapter) => adapter.injectCore(_aliceCore);
+
+  /// Tag the next [maxCalls] HTTP requests with [tag].
+  /// If [maxCalls] is not provided, tags all subsequent calls until [clearTag] is called.
+  void tag({required String tag, int? maxCalls}) =>
+      _aliceCore.tagService.tag(tag: tag, maxCalls: maxCalls);
+
+  /// Clear the active tag.
+  void clearTag() => _aliceCore.tagService.clearTag();
+}
