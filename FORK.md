@@ -84,6 +84,13 @@ physical shake never fires twice. Android keeps the accelerometer.
 - Tests: bubble placement (`alice_core_shake_test.dart`,
   `alice_overlay_bubble_snap_test.dart`) and one-bubble-per-frame; 144 pass.
 
+## 5. iOS hook only while Alice listens (2.0.0+pbb.5)
+
+`UIWindow`'s `motionEnded(_:with:)` override is now installed when Dart
+starts listening on `alice/shake` (only an active Alice does), not when the
+plugin registers. Builds that never create Alice, such as production builds,
+leave UIWindow unchanged.
+
 ## Using it
 
 Use it as a git dependency pinned to a commit:

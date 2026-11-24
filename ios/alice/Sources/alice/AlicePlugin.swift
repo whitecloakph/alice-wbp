@@ -10,6 +10,10 @@ import UIKit
 /// `UIWindow` that posts a notification and then runs the implementation
 /// UIWindow had before, with the original selector, so the event still goes
 /// up the responder chain and the app's own responders see every event.
+///
+/// The override is installed only when Dart starts listening, which Alice
+/// does only when it is active. An app that registers the plugin but never
+/// creates Alice (for example a production build) leaves UIWindow untouched.
 public class AlicePlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
   private var eventSink: FlutterEventSink?
   private var observer: NSObjectProtocol?
@@ -29,13 +33,13 @@ public class AlicePlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
     let events = FlutterEventChannel(
       name: "alice/shake", binaryMessenger: registrar.messenger())
     events.setStreamHandler(instance)
-    UIWindow.aliceInstallShakeHook()
   }
 
   public func onListen(
     withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink
   ) -> FlutterError? {
     eventSink = events
+    UIWindow.aliceInstallShakeHook()
     if observer == nil {
       observer = NotificationCenter.default.addObserver(
         forName: .aliceDeviceShaken, object: nil, queue: .main
