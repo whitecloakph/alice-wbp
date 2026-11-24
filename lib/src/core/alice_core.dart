@@ -12,6 +12,7 @@ import 'package:alice/src/services/overlay/alice_overlay_service.dart';
 import 'package:alice/src/services/redaction/alice_redaction_service.dart';
 import 'package:alice/src/services/vm/alice_vm_service.dart';
 import 'package:alice/src/model/alice_configuration.dart';
+import 'package:alice/src/model/alice_shake_action.dart';
 import 'package:alice/src/model/export_result.dart';
 import 'package:alice/src/model/alice_http_call.dart';
 import 'package:alice/src/model/alice_http_error.dart';
@@ -40,6 +41,10 @@ class AliceCore {
 
   late final AliceOverlayService _overlayService;
 
+  /// True after [hideOverlayBubble] (or a shake toggle) until
+  /// [showOverlayBubble]: new calls must not bring a hidden bubble back.
+  bool _overlayBubbleHiddenByUser = false;
+
   late final AliceRedactionService _redactionService;
 
   /// Creates alice core instance
@@ -59,8 +64,8 @@ class AliceCore {
     if (_configuration.showInspectorOnShake) {
       if (OperatingSystem.isAndroid || OperatingSystem.isIOS) {
         _shakeDetector = ShakeDetector.autoStart(
-          onPhoneShake: navigateToCallListScreen,
-          shakeThresholdGravity: 4,
+          onPhoneShake: handleShake,
+          shakeThresholdGravity: _configuration.shakeThresholdGravity,
         );
       }
     }
@@ -74,7 +79,7 @@ class AliceCore {
   /// Set custom navigation key. This will help if there's route library.
   void setNavigatorKey(GlobalKey<NavigatorState> navigatorKey) {
     _configuration = _configuration.copyWith(navigatorKey: navigatorKey);
-    if (_configuration.showOverlayBubble) {
+    if (_configuration.showOverlayBubble && !_overlayBubbleHiddenByUser) {
       final overlay = navigatorKey.currentState?.overlay;
       _overlayService.ensureInserted(overlayState: overlay, core: this);
     }
@@ -82,13 +87,36 @@ class AliceCore {
 
   /// Manually shows or ensures the floating overlay bubble is displayed.
   void showOverlayBubble() {
+    _overlayBubbleHiddenByUser = false;
     final overlay = _configuration.navigatorKey?.currentState?.overlay;
     _overlayService.ensureInserted(overlayState: overlay, core: this);
   }
 
-  /// Removes or hides the floating overlay bubble.
+  /// Removes or hides the floating overlay bubble. It stays hidden, even
+  /// when new calls arrive, until [showOverlayBubble] is called.
   void hideOverlayBubble() {
+    _overlayBubbleHiddenByUser = true;
     _overlayService.remove();
+  }
+
+  /// Hides the overlay bubble if it is shown, shows it otherwise.
+  void toggleOverlayBubble() {
+    if (isOverlayBubbleVisible) {
+      hideOverlayBubble();
+    } else {
+      showOverlayBubble();
+    }
+  }
+
+  /// Runs the configured [AliceConfiguration.shakeAction]. Called by the
+  /// shake detector.
+  void handleShake() {
+    switch (_configuration.shakeAction) {
+      case AliceShakeAction.openInspector:
+        navigateToCallListScreen();
+      case AliceShakeAction.toggleOverlayBubble:
+        toggleOverlayBubble();
+    }
   }
 
   /// Returns true if the floating overlay bubble is currently mounted.
@@ -104,7 +132,7 @@ class AliceCore {
 
   /// Called when calls has been updated
   Future<void> _onCallsChanged(List<AliceHttpCall>? calls) async {
-    if (_configuration.showOverlayBubble) {
+    if (_configuration.showOverlayBubble && !_overlayBubbleHiddenByUser) {
       final overlay = _configuration.navigatorKey?.currentState?.overlay;
       _overlayService.ensureInserted(overlayState: overlay, core: this);
     }

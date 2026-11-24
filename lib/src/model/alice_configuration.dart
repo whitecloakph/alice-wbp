@@ -1,3 +1,4 @@
+import 'package:alice/src/model/alice_shake_action.dart';
 import 'package:alice/src/services/logger/alice_logger.dart';
 import 'package:alice/src/services/notification/alice_notification_adapter.dart';
 import 'package:alice/src/services/storage/alice_memory_storage.dart';
@@ -24,6 +25,18 @@ class AliceConfiguration extends Equatable {
   /// Should inspector be opened on device shake (works only with physical
   /// with sensors). Default value is true.
   final bool showInspectorOnShake;
+
+  /// What a device shake does when [showInspectorOnShake] is true.
+  /// Defaults to [AliceShakeAction.openInspector].
+  final AliceShakeAction shakeAction;
+
+  /// Acceleration, in g, a shake must exceed. Default 4.
+  final double shakeThresholdGravity;
+
+  /// Whether the overlay bubble, when released after a drag, glides to the
+  /// nearest screen edge (left, right, top or bottom, inside the safe area)
+  /// and stays on that edge when the screen size changes. Default false.
+  final bool snapOverlayBubbleToEdge;
 
   /// Directionality of app. Directionality of the app will be used if set to
   /// null. Default value is null.
@@ -61,6 +74,9 @@ class AliceConfiguration extends Equatable {
     this.notificationAdapter,
     this.showOverlayBubble = false,
     this.showInspectorOnShake = true,
+    this.shakeAction = AliceShakeAction.openInspector,
+    this.shakeThresholdGravity = 4,
+    this.snapOverlayBubbleToEdge = false,
     this.directionality,
     this.showShareButton = true,
     this.detectDuplicates = true,
@@ -81,6 +97,9 @@ class AliceConfiguration extends Equatable {
     AliceNotificationAdapter? notificationAdapter,
     bool? showOverlayBubble,
     bool? showInspectorOnShake,
+    AliceShakeAction? shakeAction,
+    double? shakeThresholdGravity,
+    bool? snapOverlayBubbleToEdge,
     TextDirection? directionality,
     bool? showShareButton,
     bool? detectDuplicates,
@@ -94,6 +113,10 @@ class AliceConfiguration extends Equatable {
     notificationAdapter: notificationAdapter ?? this.notificationAdapter,
     showOverlayBubble: showOverlayBubble ?? this.showOverlayBubble,
     showInspectorOnShake: showInspectorOnShake ?? this.showInspectorOnShake,
+    shakeAction: shakeAction ?? this.shakeAction,
+    shakeThresholdGravity: shakeThresholdGravity ?? this.shakeThresholdGravity,
+    snapOverlayBubbleToEdge:
+        snapOverlayBubbleToEdge ?? this.snapOverlayBubbleToEdge,
     directionality: directionality ?? this.directionality,
     showShareButton: showShareButton ?? this.showShareButton,
     detectDuplicates: detectDuplicates ?? this.detectDuplicates,
@@ -112,6 +135,9 @@ class AliceConfiguration extends Equatable {
     notificationAdapter,
     showOverlayBubble,
     showInspectorOnShake,
+    shakeAction,
+    shakeThresholdGravity,
+    snapOverlayBubbleToEdge,
     directionality,
     showShareButton,
     detectDuplicates,

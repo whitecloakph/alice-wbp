@@ -39,6 +39,7 @@ class AliceOverlayService {
             }
           },
           onDismiss: remove,
+          snapToEdge: core.configuration.snapOverlayBubbleToEdge,
         );
       },
     );

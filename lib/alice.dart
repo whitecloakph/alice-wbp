@@ -2,6 +2,7 @@ export 'package:alice/src/core/alice.dart';
 export 'package:alice/src/core/alice_adapter.dart';
 export 'package:alice/src/core/alice_core.dart';
 export 'package:alice/src/model/alice_configuration.dart';
+export 'package:alice/src/model/alice_shake_action.dart';
 export 'package:alice/src/model/alice_cookie.dart';
 export 'package:alice/src/model/alice_form_data_field.dart';
 export 'package:alice/src/model/alice_form_data_file.dart';

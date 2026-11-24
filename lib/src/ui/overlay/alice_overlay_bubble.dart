@@ -14,21 +14,109 @@ class AliceOverlayBubble extends StatefulWidget {
   final VoidCallback onTap;
   final VoidCallback onDismiss;
 
+  /// When true, the bubble glides to the nearest screen edge on release and
+  /// stays on that edge when the screen or bubble size changes.
+  final bool snapToEdge;
+
   const AliceOverlayBubble({
     super.key,
     required this.callsStream,
     required this.storage,
     required this.onTap,
     required this.onDismiss,
+    this.snapToEdge = false,
   });
 
   @override
   State<AliceOverlayBubble> createState() => _AliceOverlayBubbleState();
 }
 
+/// Screen edge the bubble is snapped to.
+enum _BubbleEdge { left, right, top, bottom }
+
 class _AliceOverlayBubbleState extends State<AliceOverlayBubble> {
+  /// Gap between a snapped bubble and the safe-area edge.
+  static const double _edgeMargin = 8;
+
+  /// Bubble size used before the first layout.
+  static const Size _defaultBubbleSize = Size(90, 34);
+
+  final GlobalKey _bubbleKey = GlobalKey();
   Offset _offset = const Offset(16, 96);
   bool _isInitialized = false;
+  bool _isDragging = false;
+  _BubbleEdge? _edge;
+  Size _bubbleSize = _defaultBubbleSize;
+
+  /// Allowed top-left positions inside the safe area for the current size.
+  Rect _bounds(MediaQueryData mediaQuery) {
+    final screenSize = mediaQuery.size;
+    final padding = mediaQuery.padding;
+    final double minX = padding.left + _edgeMargin;
+    final double maxX = math.max(
+      minX,
+      screenSize.width - padding.right - _bubbleSize.width - _edgeMargin,
+    );
+    final double minY = padding.top + _edgeMargin;
+    final double maxY = math.max(
+      minY,
+      screenSize.height - padding.bottom - _bubbleSize.height - _edgeMargin,
+    );
+    return Rect.fromLTRB(minX, minY, maxX, maxY);
+  }
+
+  /// [offset] clamped into [bounds], then moved onto [edge].
+  static Offset _onEdge(Offset offset, Rect bounds, _BubbleEdge edge) {
+    final clamped = Offset(
+      offset.dx.clamp(bounds.left, bounds.right),
+      offset.dy.clamp(bounds.top, bounds.bottom),
+    );
+    return switch (edge) {
+      _BubbleEdge.left => Offset(bounds.left, clamped.dy),
+      _BubbleEdge.right => Offset(bounds.right, clamped.dy),
+      _BubbleEdge.top => Offset(clamped.dx, bounds.top),
+      _BubbleEdge.bottom => Offset(clamped.dx, bounds.bottom),
+    };
+  }
+
+  /// Edge of [bounds] closest to [offset].
+  static _BubbleEdge _nearestEdge(Offset offset, Rect bounds) {
+    final distances = {
+      _BubbleEdge.left: offset.dx - bounds.left,
+      _BubbleEdge.right: bounds.right - offset.dx,
+      _BubbleEdge.top: offset.dy - bounds.top,
+      _BubbleEdge.bottom: bounds.bottom - offset.dy,
+    };
+    return distances.entries
+        .reduce((a, b) => b.value < a.value ? b : a)
+        .key;
+  }
+
+  void _onDragEnd() {
+    if (!mounted) return;
+    setState(() {
+      _isDragging = false;
+      if (widget.snapToEdge) {
+        final bounds = _bounds(MediaQuery.of(context));
+        _edge = _nearestEdge(_offset, bounds);
+        _offset = _onEdge(_offset, bounds, _edge!);
+      }
+    });
+  }
+
+  /// Re-lays out once the real bubble size is known (it changes with the
+  /// counters), so a snapped bubble stays flush with its edge.
+  void _syncBubbleSize() {
+    if (!widget.snapToEdge) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final box = _bubbleKey.currentContext?.findRenderObject();
+      if (box is! RenderBox || !box.hasSize || box.size.isEmpty) return;
+      if (box.size != _bubbleSize) {
+        setState(() => _bubbleSize = box.size);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,8 +124,24 @@ class _AliceOverlayBubbleState extends State<AliceOverlayBubble> {
     final screenSize = mediaQuery.size;
     final padding = mediaQuery.padding;
 
-    // Constrain position within screen safe area bounds.
-    if (!_isInitialized) {
+    if (widget.snapToEdge) {
+      final bounds = _bounds(mediaQuery);
+      if (!_isInitialized) {
+        _edge = _BubbleEdge.right;
+        _offset = Offset(bounds.right, padding.top + 60);
+        _isInitialized = true;
+      }
+      if (_isDragging || _edge == null) {
+        _offset = Offset(
+          _offset.dx.clamp(bounds.left, bounds.right),
+          _offset.dy.clamp(bounds.top, bounds.bottom),
+        );
+      } else {
+        _offset = _onEdge(_offset, bounds, _edge!);
+      }
+      _syncBubbleSize();
+    } else if (!_isInitialized) {
+      // Constrain position within screen safe area bounds.
       _offset = Offset(screenSize.width - 150, padding.top + 60);
       _isInitialized = true;
     } else {
@@ -55,10 +159,18 @@ class _AliceOverlayBubbleState extends State<AliceOverlayBubble> {
       );
     }
 
-    return Positioned(
+    return AnimatedPositioned(
+      duration: widget.snapToEdge && !_isDragging
+          ? const Duration(milliseconds: 220)
+          : Duration.zero,
+      curve: Curves.easeOutCubic,
       left: _offset.dx,
       top: _offset.dy,
       child: GestureDetector(
+        key: _bubbleKey,
+        onPanStart: (_) => setState(() => _isDragging = true),
+        onPanEnd: (_) => _onDragEnd(),
+        onPanCancel: _onDragEnd,
         onPanUpdate: (details) {
           setState(() {
             _offset += details.delta;
@@ -68,6 +180,8 @@ class _AliceOverlayBubbleState extends State<AliceOverlayBubble> {
           stream: widget.callsStream,
           builder: (context, snapshot) {
             final stats = widget.storage.getStats();
+            // The counters change the bubble's width.
+            _syncBubbleSize();
 
             // Only show the bubble when at least one call has been recorded.
             if (stats.total == 0) {

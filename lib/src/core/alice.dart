@@ -35,6 +35,9 @@ class Alice {
   /// Removes or hides the floating overlay bubble.
   void hideOverlayBubble() => _aliceCore.hideOverlayBubble();
 
+  /// Hides the floating overlay bubble if shown, shows it otherwise.
+  void toggleOverlayBubble() => _aliceCore.toggleOverlayBubble();
+
   /// Returns true if the floating overlay bubble is currently mounted.
   bool get isOverlayBubbleVisible => _aliceCore.isOverlayBubbleVisible;
 
