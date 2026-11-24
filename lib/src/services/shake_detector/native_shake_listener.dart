@@ -27,9 +27,9 @@ class AliceNativeShakeListener {
     bool available;
     try {
       available = await controlChannel.invokeMethod<bool>('isAvailable') ?? false;
-    } on MissingPluginException {
-      available = false;
-    } on PlatformException {
+    } catch (_) {
+      // Missing plugin (web, plugin not linked), a platform error, or an
+      // unexpected answer: never let it escape (start() is not awaited).
       available = false;
     }
     if (_disposed) return;

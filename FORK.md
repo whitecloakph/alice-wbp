@@ -105,6 +105,15 @@ leave UIWindow unchanged.
   prompt; the app's previous setting is restored when Dart stops listening.
 - Test: `test/services/shake_detector_count_test.dart`; 150 tests pass.
 
+## 7. Review fixes (2.0.0+pbb.7)
+
+- `AliceNativeShakeListener.start()` treats any error or unexpected answer
+  from the iOS part as "unavailable" (falls back to the accelerometer); it is
+  not awaited, so nothing may escape it.
+- Upstream files edited by the fork keep upstream's CRLF line endings, so
+  `git diff` against upstream shows only the real changes.
+- 151 tests pass.
+
 ## Using it
 
 Use it as a git dependency pinned to a commit:

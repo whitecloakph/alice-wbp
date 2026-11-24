@@ -53,6 +53,22 @@ void main() {
       expect(unavailable, isTrue);
     });
 
+    test('treats an unexpected answer as unavailable', () async {
+      messenger.setMockMethodCallHandler(
+        AliceNativeShakeListener.controlChannel,
+        (call) async => 'yes',
+      );
+      var unavailable = false;
+      final listener = AliceNativeShakeListener(
+        onShake: () {},
+        onUnavailable: () => unavailable = true,
+      );
+
+      await listener.start();
+
+      expect(unavailable, isTrue);
+    });
+
     test('does nothing after dispose', () async {
       messenger.setMockMethodCallHandler(
         AliceNativeShakeListener.controlChannel,
